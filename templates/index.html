@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bula Youth Officials</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="{{ url_for('static', filename='theme.js') }}"></script>
+    <!-- Your Custom CSS (if it's not overriding Bootstrap too much for this example) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Optional: Small style adjustments if needed, or put in your style.css */
+        .sortable-header a {
+            text-decoration: none;
+            color: inherit;
+        }
+        .sortable-header a:hover {
+            text-decoration: underline;
+        }
+        .action-links a {
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body class="container mt-4">        
+    <div class="d-flex align-items-center mb-3">
+    <img src="{{ url_for('static', filename='bmyo.png') }}" alt="Bula Municipal Youth Logo" style="height: 60px; width: auto; margin-right: 15px;">
+    <h1 class="mb-0">Bula Youth Officials Management</h1>
+    </div>
+    
+    <div style="text-align: right; margin-bottom: 15px;">
+        <button id="theme-toggle-button" class="btn">Toggle Theme</button>
+    </div>
+
+    <div style="text-align: right; margin-bottom: 15px;">
+    {% if username %}  {# Check if 'username' (from session) exists #}
+    <span>Welcome, {{ username }}!</span>
+    <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm ms-2">Logout</a>
+    {% else %}
+    <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-sm">Login</a>
+    {% endif %}
+    </div>
+
+
+    <!-- Control Section: Search/Filter and Add New -->
+    <div class="mb-3">
+        <div class="d-flex justify-content-start mb-2">
+            <button class="btn btn-primary me-2" type="button" data-bs-toggle="collapse" data-bs-target="#searchFilterCollapse" aria-expanded="true" aria-controls="searchFilterCollapse">
+                Search & Filter
+            </button>
+            {% if username and role == 'admin' %} {# Check if username exists and role is admin #}
+            <button class="btn btn-success" type="button" data-bs-toggle="collapse" data-bs-target="#addOfficialCollapse" aria-expanded="false" aria-controls="addOfficialCollapse">
+                Add New Official
+            </button>
+            {% endif %}
+
+        </div>
+
+        <!-- Collapsible Search and Filter Form -->
+        <div class="collapse show" id="searchFilterCollapse">
+            <div class="card card-body mb-3">
+                <form method="GET" action="{{ url_for('index') }}">
+                    <h5 style="color: #0C848F;">Search & Filter</h5>
+                    <!-- Hidden inputs to preserve sorting when search/filter is applied -->
+                    <input type="hidden" name="sort_by" value="{{ request.args.get('sort_by', 'id') }}">
+                    <input type="hidden" name="sort_order" value="{{ request.args.get('sort_order', 'asc') }}">
+
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-4">
+                            <label for="search_query_main" class="form-label">Search</label>
+                            <input type="text" class="form-control" id="search_query_main" name="search_query" placeholder="Name, email, role..." value="{{ request.args.get('search_query', '') }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="filter_status_main" class="form-label">Status</label>
+                            <select name="filter_status" id="filter_status_main" class="form-select">
+                                <option value="">-- All Statuses --</option>
+                                <option value="Active" {% if request.args.get('filter_status') == 'Active' %}selected{% endif %}>Active</option>
+                                <option value="Inactive" {% if request.args.get('filter_status') == 'Inactive' %}selected{% endif %}>Inactive</option>
+                                <!-- Add other statuses as needed -->
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="filter_role_main" class="form-label">Role</label>
+                            <select name="filter_role" id="filter_role_main" class="form-select">
+                                <option value="">-- All Roles --</option>
+                                <option value="Youth Mayor" {% if request.args.get('filter_role') == 'Youth Mayor' %}selected{% endif %}>Youth Mayor</option>
+                                <option value="Vice Mayor" {% if request.args.get('filter_role') == 'Vice Mayor' %}selected{% endif %}>Vice Mayor</option>
+                                <option value="Councilors" {% if request.args.get('filter_role') == 'Councilors' %}selected{% endif %}>Councilors</option>
+                                <option value="Office Heads" {% if request.args.get('filter_role') == 'Office Heads' %}selected{% endif %}>Office Heads</option>
+                                <!-- Add other roles as needed -->
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-grid">
+                            <button type="submit" class="btn btn-outline-primary">Apply</button>
+                        </div>
+                    </div>
+                     <div class="mt-2">
+                        <a href="{{ url_for('index') }}" class="btn btn-sm btn-outline-secondary">Clear All Filters & Search</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Collapsible Add New Official Form -->
+        {% if username and role == 'admin' %}
+        <div class="collapse" id="addOfficialCollapse">
+            <div class="card card-body mb-3">
+                <h5>Add New Official</h5>
+                <form action="{{ url_for('add_student') }}" method="post">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="add_first_name" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="add_first_name" name="first_name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="add_last_name" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="add_last_name" name="last_name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="add_birthday" class="form-label">Birthday</label>
+                            <input type="date" class="form-control" id="add_birthday" name="birthday">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="add_age" class="form-label">Age</label>
+                            <input type="number" class="form-control" id="add_age" name="age" min="0">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="add_email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="add_email" name="email">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="add_phone_number" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="add_phone_number" name="phone_number">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="add_role" class="form-label">Role</label>
+                            <input type="text" class="form-control" id="add_role" name="role">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="add_status" class="form-label">Status</label>
+                            <input type="text" class="form-control" id="add_status" name="status" placeholder="Default: Active">
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-success">Add Official</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+
+    <!-- Main Content: Table of Officials -->
+    <main>
+        <h2>Current Officials</h2>
+        {% if records %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover table-dark">
+                <thead>
+                    <tr>
+                        {% macro sort_link(column_db_name, display_name) %}
+                            <th class="sortable-header">
+                                <a href="{{ url_for('index', 
+                                                    sort_by=column_db_name, 
+                                                    sort_order='asc' if request.args.get('sort_by') != column_db_name or request.args.get('sort_order') == 'desc' else 'desc',
+                                                    search_query=request.args.get('search_query', ''),
+                                                    filter_status=request.args.get('filter_status', ''),
+                                                    filter_role=request.args.get('filter_role', '')
+                                                    ) }}">
+                                    {{ display_name }}
+                                    {% if request.args.get('sort_by') == column_db_name %}
+                                        {% if request.args.get('sort_order') == 'asc' %}▲{% else %}▼{% endif %}
+                                    {% endif %}
+                                </a>
+                            </th>
+                        {% endmacro %}
+
+                        {{ sort_link('id', 'ID') }}
+                        {{ sort_link('first_name', 'First Name') }}
+                        {{ sort_link('last_name', 'Last Name') }}
+                        {{ sort_link('birthday', 'Birthday') }}
+                        {{ sort_link('age', 'Age') }}
+                        {{ sort_link('email', 'Email') }}
+                        {{ sort_link('phone_number', 'Phone') }}
+                        {{ sort_link('role', 'Role') }}
+                        {{ sort_link('status', 'Status') }}
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {# Assuming default cursor (returns tuples) #}
+                    {# record[0]=id, [1]=first_name, [2]=last_name, [3]=birthday, [4]=age, 
+                       [5]=email, [6]=phone_number, [7]=role, [8]=status #}
+                    {% for record in records %}
+                    <tr>
+                        <td>{{ record[0] }}</td>
+                        <td>{{ record[1] }}</td>
+                        <td>{{ record[2] }}</td>
+                        <td>{{ record[3].strftime('%Y-%m-%d') if record[3] else '' }}</td>
+                        <td>{{ record[4] if record[4] is not none else '' }}</td>
+                        <td>{{ record[5] if record[5] else '' }}</td>
+                        <td>{{ record[6] if record[6] else '' }}</td>
+                        <td>{{ record[7] if record[7] else '' }}</td>
+                        <td>{{ record[8] if record[8] else '' }}</td>
+                        <td class="action-links">
+                            {% if username and role == 'admin' %}
+                            <a href="{{ url_for('edit_student', id=record[0]) }}" class="btn btn-sm btn-warning">Edit</a>
+                            <a href="{{ url_for('delete_student', id=record[0]) }}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete {{ record[1] }} {{ record[2] }}?');">Delete</a>
+                            {% else %}
+                            <em>No actions</em>
+                            {% endif %}
+                        </td>
+
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info" role="alert">
+            No officials found matching your criteria.
+            {% if not request.args %} <!-- Show only if no filters/search applied -->
+                Try adding one using the "Add New Official" button above!
+            {% endif %}
+        </div>
+        {% endif %}
+    </main>
+     {% if username and role == 'admin' %} {# Only show reset button to admin #}
+    <div class="my-3 text-center"> <!-- Added some margin and centering -->
+        <button id="reset-id-btn" class="btn btn-danger btn-sm">Reset All IDs & Delete Records</button>
+        <div id="reset-status" class="mt-2"></div>
+    </div>
+    {% endif %}
+    <!-- Your theme.js if it's separate -->
+    <!-- <script src="{{ url_for('static', filename='theme.js') }}"></script> -->
+
+    <script>
+        // Wait for the DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            const resetButton = document.getElementById('reset-id-btn');
+            const statusDiv = document.getElementById('reset-status');
+
+            if (resetButton) { // Check if the button exists (it might not for non-admins)
+                resetButton.addEventListener('click', function() {
+                    // Confirmation dialog
+                    if (!confirm('WARNING: This will delete ALL youth official records and reset the ID sequence. Are you absolutely sure?')) {
+                        return; // User cancelled
+                    }
+
+                    statusDiv.textContent = 'Processing...';
+                    statusDiv.className = 'alert alert-info'; // Bootstrap alert styling
+
+                    fetch("{{ url_for('reset_ids_route') }}", { // Use url_for for the route
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json' // Not strictly needed for empty body, but good practice
+                            // If you had CSRF tokens, you'd add them here
+                        }
+                        // body: JSON.stringify({}) // No body needed for this specific request
+                    })
+                    .then(response => response.json()) // Expect a JSON response
+                    .then(data => {
+                        if (data.status === 'success') {
+                            statusDiv.textContent = data.message;
+                            statusDiv.className = 'alert alert-success';
+                            // Optionally, reload the page to see the empty table and reflect flashed message
+                            // You might want a slight delay or let the user click refresh
+                            alert(data.message + " The page will now reload."); // Alert before reload
+                            window.location.reload();
+                        } else {
+                            statusDiv.textContent = 'Error: ' + data.message;
+                            statusDiv.className = 'alert alert-danger';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        statusDiv.textContent = 'An unexpected error occurred. Check console.';
+                        statusDiv.className = 'alert alert-danger';
+                    });
+                });
+            }
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
